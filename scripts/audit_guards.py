@@ -39,6 +39,8 @@ CHECKS = [
     (("gateway", "startup_watchdog"), False),
     (("gateway", "bot_loop_guard", "enabled"), False),
     (("loops", "max_ticks"), 0),
+    (("loops", "max_web_searches"), 0),
+    (("loops", "max_subagents"), 0),
     (("agent", "max_turns"), 9999),
     (("goals", "max_turns"), 9999),
     (("delegation", "max_iterations"), 9999),

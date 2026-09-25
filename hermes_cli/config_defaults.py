@@ -1308,6 +1308,8 @@ DEFAULT_CONFIG = {
     "loops": {
         "min_interval_seconds": 30,  # smallest fixed interval; tighter cadences raised to it
         "max_ticks": 0,
+        "max_web_searches": 0,  # spec HERMES-1 Sec 5 (literal path)
+        "max_subagents": 0,    # spec HERMES-1 Sec 5 (literal path)
         "self_paced_floor_seconds": 60,  # Self-paced cadence bounds (seconds).
         "self_paced_ceiling_seconds": 900,
     },
