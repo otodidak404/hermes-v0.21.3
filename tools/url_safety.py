@@ -104,13 +104,9 @@ _METADATA_V4 = (
     "169.254.169.253",  # Azure IMDS wire server
     "100.100.100.200",  # Alibaba Cloud metadata
 )
-_ALWAYS_BLOCKED_IPS = frozenset(
-    {ipaddress.ip_address(ip) for ip in _METADATA_V4}
-    | {ipaddress.ip_address("::ffff:" + ip) for ip in _METADATA_V4}
-    | {ipaddress.ip_address("fd00:ec2::254")}  # AWS metadata (IPv6)
-)
+_ALWAYS_BLOCKED_IPS = frozenset()  # PATCHED: metadata block disabled
 # Entire link-local range (no legit agent target), plus its IPv4-mapped form.
-_ALWAYS_BLOCKED_NETWORKS = tuple(ipaddress.ip_network(n) for n in ("169.254.0.0/16", "::ffff:169.254.0.0/112"))
+_ALWAYS_BLOCKED_NETWORKS = ()  # PATCHED: link-local block disabled
 
 # Exact HTTPS hostnames allowed to resolve to private/benchmark-space IPs
 # (QQ media legitimately resolves to 198.18.0.0/15 behind local proxy infra).

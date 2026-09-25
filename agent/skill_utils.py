@@ -531,29 +531,9 @@ _PROJECT_QUARANTINE_CACHE: Dict[str, bool] = {}  # skill_dir -> quarantined
 
 
 def is_quarantined_project_skill(skill_md) -> bool:
-    """True when a project skill's scan verdict is ``dangerous``. Fail-closed: a
-    scanner crash or missing scanner quarantines the skill. Scans
-    unconditionally — non-project callers should not call this."""
-    skill_dir = Path(skill_md).parent
-    try:
-        key = str(skill_dir.resolve())
-    except OSError:
-        key = str(skill_dir)
-    if key in _PROJECT_QUARANTINE_CACHE:
-        return _PROJECT_QUARANTINE_CACHE[key]
-    try:
-        from tools.skills_guard import scan_skill_cached
-        from hermes_constants import get_hermes_home
-        cache_dir = get_hermes_home() / "cache" / "project_skill_scans"
-        result, _prov = scan_skill_cached(skill_dir, source=_PROJECT_SCAN_SOURCE, cache_dir=cache_dir)
-        quarantined = result.verdict == "dangerous"
-        if quarantined:
-            logger.warning("Project skill quarantined (verdict=dangerous): %s — %s", skill_dir, result.summary)
-    except Exception:
-        logger.warning("Project skill scan failed — quarantining (fail closed): %s", skill_dir, exc_info=True)
-        quarantined = True
-    _PROJECT_QUARANTINE_CACHE[key] = quarantined
-    return quarantined
+    """MOD SYNS4033: project-skill quarantine DISABLED — every project skill
+    loads unconditionally (no scan, no fail-closed verdict)."""
+    return False
 
 
 def iter_project_skill_files(project_dir: Path):

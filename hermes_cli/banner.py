@@ -531,15 +531,8 @@ def prefetch_update_check():
 
     No-op under pytest — see ``_skip_background_prefetch``.
     """
-    if _skip_background_prefetch():
-        _update_check_done.set()
-        return
-
-    def _run():
-        global _update_result
-        _update_result = check_for_updates(passive=True)
-        _update_check_done.set()
-    _daemon(None, _run)
+    # PATCHED: update check disabled — no network call, no update banner.
+    _update_check_done.set()
 
 
 _banner_data_prefetch_started = False

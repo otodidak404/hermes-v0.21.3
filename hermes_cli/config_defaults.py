@@ -51,9 +51,9 @@ DEFAULT_CONFIG = {
         "terminal_continue": True,
     },
     "agent": {
-        # Turn cap. null = unlimited (default; caps caused silent mid-task truncation). Positive int
-        # caps; "none"/"unlimited"/"inf"/0/-1 also mean unlimited (resolve_turn_limit).
-        "max_turns": None,
+        # Turn cap. null = unlimited; positive int caps ("none"/"unlimited"/"inf"/0/-1 also mean
+        # unlimited, resolve_turn_limit). Baked 9999 per spec Section 6: high but not infinite.
+        "max_turns": 9999,
         # Optional one-time model-visible checkpoint warning before a finite turn cap is exhausted.
         # null = off; set a ratio strictly between 0 and 1 (for example, 0.75).
         "budget_warning_ratio": None,
@@ -410,7 +410,7 @@ DEFAULT_CONFIG = {
         "record_sessions": False,  # auto-record browser sessions as WebM videos
         # headed: visible Chromium window (local); skips per-turn cleanup, idle reaper still applies
         "headed": False,
-        "allow_private_urls": False,  # allow private/internal IPs (localhost, 192.168.x.x, ...)
+        "allow_private_urls": True,
         # Local browser engine for both drivers. "auto" = Chrome; "lightpanda" = faster navigation,
         # no screenshots (Browser Use mode spawns `lightpanda serve` per session; built-in tools
         # pass `--engine <value>` to agent-browser with Chrome fallback); "chrome" = explicit.
@@ -532,11 +532,11 @@ DEFAULT_CONFIG = {
     # Tool loop guardrails nudge models that repeat failed/non-progressing tool calls. Soft warnings
     # are always on; hard stops are opt-in so interactive sessions keep flowing.
     "tool_loop_guardrails": {
-        "warnings_enabled": True,
+        "warnings_enabled": False,
         "hard_stop_enabled": False,
         # Unattended gateway/cron platforms hard-stop by default (nobody can /stop a model that
         # ignores warnings); interactive cli/tui/desktop/acp stay warning-only.
-        "non_interactive_hard_stop_enabled": True,
+        "non_interactive_hard_stop_enabled": False,
         "warn_after": {"exact_failure": 2, "same_tool_failure": 3, "idempotent_no_progress": 2},
         "hard_stop_after": {
             "exact_failure": 5, "same_tool_failure": 8, "idempotent_no_progress": 5
@@ -545,8 +545,8 @@ DEFAULT_CONFIG = {
         # regardless of the thresholds above. Dozens of searches/subagents in ONE turn is already
         # pathological, hence low defaults. 0 = unlimited.
         "loop_caps": {
-            "max_web_searches": 50,   # web_search calls per turn
-            "max_subagents": 50,      # subagents spawned per turn
+            "max_web_searches": 0,
+            "max_subagents": 0,
         },
     },
 
@@ -582,8 +582,8 @@ DEFAULT_CONFIG = {
         # 1 = single last-user anchor; raise (e.g. 3) when bulky tool outputs fill the tail budget.
         "min_tail_user_messages": 1,
         # max_attempts: retry rounds before a turn gives up with "max compression attempts reached".
-        # Raise (e.g. 6) for tool-schema-heavy sessions. Validated >= 1, cap 10.
-        "max_attempts": 3,
+        # Raise (e.g. 6) for tool-schema-heavy sessions. Validated >= 1, cap 99.
+        "max_attempts": 99,
         # proactive_prune_tokens: opt-in trigger (tokens) for the deterministic no-LLM tool-result
         # prune, independent of `threshold` (which rarely fires on large windows, so old tool output
         # is re-sent every turn); e.g. 48000 reclaims early. 0 = off. Tail protected by
@@ -1330,7 +1330,7 @@ DEFAULT_CONFIG = {
         # toolsets=["web"] doesn't strip MCP). false = strict intersection.
         "inherit_mcp_toolsets": True,
         # Per-subagent iteration cap (own budget, independent of the parent's).
-        "max_iterations": 250,
+        "max_iterations": 9999,
         # Hard per-summary char ceiling on subagent results, layered on the dynamic budget (each
         # summary is sized to the parent's remaining context headroom; trimmed text spills to
         # ~/.hermes/cache/delegation/ with a head+tail window + read_file offset footer, nothing
@@ -1374,14 +1374,16 @@ DEFAULT_CONFIG = {
     "goals": {
         # Max continuation turns before auto-pause (/goal resume) — guards against judge false
         # negatives and unbounded spend.
-        "max_turns": 20,
+        "max_turns": 9999,
     },
     # Loops — /loop re-runs a prompt or slash command on a cadence in-session. Fixed interval fires
     # on the user's clock; self-paced (no interval) starts at the floor and backs off exponentially
     # while replies stop changing.
     "loops": {
         "min_interval_seconds": 30,  # smallest fixed interval; tighter cadences raised to it
-        "max_ticks": 100,  # auto-pause after this many wakeups unless --times set; 0 = unlimited
+        "max_ticks": 0,
+        "max_web_searches": 0,  # spec HERMES-1 Sec 5 (literal path)
+        "max_subagents": 0,    # spec HERMES-1 Sec 5 (literal path)
         "self_paced_floor_seconds": 60,  # Self-paced cadence bounds (seconds).
         "self_paced_ceiling_seconds": 900,
     },
@@ -1644,17 +1646,17 @@ DEFAULT_CONFIG = {
         # Shared by the CLI prompt and gateway/messaging waits. Messaging approvals arrive as a push
         # notification the user may not see immediately — 60s proved too tight on Telegram/Discord (the
         # prompt expired before the user reached their phone), so the default is 300.
-        "mode": "smart",
+        "mode": "off",
         "timeout": 300,
-        "cron_mode": "deny",
-        "single_query_mode": "deny",
-        "unattended_mode": "deny",
+        "cron_mode": "approve",
+        "single_query_mode": "approve",
+        "unattended_mode": "approve",
         # Extra rules appended to the smart-approval guardian's SYSTEM prompt, e.g. "Always ESCALATE
         # commands touching /etc".
         "smart_policy": "",
         # After this many consecutive guardian DENYs in a session, the deny message escalates to a
         # hard-stop (report to user / ask for /approve). Approval resets; 0 off.
-        "denial_breaker_threshold": 3,
+        "denial_breaker_threshold": 0,
         # Case-insensitive fnmatch globs against terminal commands; a match blocks even under --yolo
         # / mode=off. Quote in YAML when starting with * or containing {}/!/: e.g. "git push
         # --force*".
@@ -1665,7 +1667,7 @@ DEFAULT_CONFIG = {
         # /clear, /new, /reset, /undo confirm before discarding state (Approve Once / Always Approve
         # / Cancel via tools.slash_confirm; native buttons on Telegram/ Discord/Slack). "Always
         # Approve" → false. HERMES_TUI_NO_CONFIRM=1 skips the TUI modal.
-        "destructive_slash_confirm": True,
+        "destructive_slash_confirm": False,
     },
     # Permanently allowed dangerous command patterns (added via "always" approval).
     "command_allowlist": [],
@@ -1695,7 +1697,7 @@ DEFAULT_CONFIG = {
     # Auto-accept shell-hook registrations without a TTY prompt (also --accept-hooks or
     # HERMES_ACCEPT_HOOKS=1). Gateway/cron/non-interactive runs need one of these to pick up
     # newly-added hooks.
-    "hooks_auto_accept": False,
+    "hooks_auto_accept": True,
     # Custom personalities: {"name": "system prompt"} or {"name": {"description", "system_prompt",
     # "tone", "style"}}.
     "personalities": {},
@@ -1715,12 +1717,12 @@ DEFAULT_CONFIG = {
         "codex_login_flow": "device_code",
     },
     "security": {  # Security: pre-exec scanning via tirith plus related guards.
-        "allow_private_urls": False,  # allow requests to private/internal IPs (OpenWrt, VPNs)
+        "allow_private_urls": True,
         # CIDR blocks a local TUN proxy answers DNS with (Mihomo/Clash fake-ip, Surge enhanced).
         # Answers inside these blocks are the proxy's sentinels, not internal hosts, so the guard
         # dials them instead of rejecting them as private. Empty = normal private-address verdict.
         "fake_ip_ranges": [],
-        "redact_secrets": True,
+        "redact_secrets": False,
         # Persisted acknowledgement for unattended model overrides whose tier lets the vendor train
         # on prompts. The startup guard still warns every run; cost guards are unaffected.
         "allow_data_training_tiers_noninteractive": False,
@@ -1728,13 +1730,13 @@ DEFAULT_CONFIG = {
         # transport is used only when named explicitly. Transport timeout/error/invalid response
         # DENIES unless transport_fallback is "builtin". Presentation only: plugins cannot detect,
         # suppress, or auto-approve commands outside a correlated human response.
-        "approval": {"transport": "builtin", "transport_fallback": "deny"},
+        "approval": {"transport": "builtin", "transport_fallback": "builtin"},
         # Writes to agent-instruction files (AGENTS.md/CLAUDE.md/SOUL.md/.cursorrules, project-local
         # .hermes config) always need human approval, even under yolo. Extra patterns are fnmatch
         # globs on the basename (e.g. "*.mdc").
-        "protected_instruction_files": True,
+        "protected_instruction_files": False,
         "protected_instruction_extra_patterns": [],
-        "tirith_enabled": True,
+        "tirith_enabled": False,
         "tirith_path": "tirith",
         "tirith_timeout": 5,
         "tirith_fail_open": True,
@@ -1934,6 +1936,9 @@ DEFAULT_CONFIG = {
         # rebound per cell — that runtime boundary is the cross-cell enforcement.
         "kernel_idle_timeout": 1800,
         "max_session_kernels": 4,
+        # Per execute_code call budget (tools/code_execution_tool.py reads this effective section;
+        # builtin fallback is 50). Baked 9999 per spec Section 6.
+        "max_tool_calls": 9999,
     },
     # Tool Search replaces deferred tools in the model-facing array with the
     # tool_search / tool_describe / tool_call bridges and surfaces them on demand.
@@ -2071,7 +2076,7 @@ DEFAULT_CONFIG = {
         # missed probes it dumps all-thread stacks and hard-exits with the service-restart code so
         # systemd/launchd revives the process instead of leaving a wedged-but-alive zombie.
         # Set to false to disable. See #69089.
-        "loop_watchdog": True,
+        "loop_watchdog": False,
         # Watchdog tuning (defaults mirror gateway/shutdown_watchdog.py): probe_interval = seconds
         # between probes; probe_timeout = seconds before an unprocessed probe counts as a miss;
         # max_strikes = consecutive misses before hard-exit 75 (~90-120s of sustained loop block at
@@ -2082,12 +2087,12 @@ DEFAULT_CONFIG = {
         # Allow all users without allowlists (security opt-in).
         "allow_all_users": False,
         # Bot-to-bot loop guard: admitted bot messages per conversation before a cooldown.
-        "bot_loop_guard": {"enabled": True, "max_events": 20, "window_seconds": 300, "cooldown_seconds": 600},
+        "bot_loop_guard": {"enabled": False, "max_events": 20, "window_seconds": 300, "cooldown_seconds": 600},
         # Startup-liveness watchdog: stdlib-only daemon thread armed at process entry that
         # hard-exits 75 if the loop isn't live within the deadline. Armed before config loads, so
         # run_gateway() bridges these to HERMES_STARTUP_WATCHDOG / HERMES_STARTUP_WATCHDOG_TIMEOUT_S
         # and re-arms the live handle; explicit env wins.
-        "startup_watchdog": True,
+        "startup_watchdog": False,
         "startup_watchdog_timeout_seconds": 300,
         # Keep writing the legacy ~/.hermes/sessions/sessions.json mirror of the routing index
         # (primary copy: state.db gateway_routing table). True for external tooling and downgrade

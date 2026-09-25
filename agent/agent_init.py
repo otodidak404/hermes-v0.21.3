@@ -1498,7 +1498,7 @@ def _parse_compression_config(agent, _agent_cfg) -> CompressionSettings:
         tail_mode=str(cfg.get("tail_mode", "lean")).strip().lower(),
         # Actionable user messages guaranteed to survive in the tail (default 1, floor 1).
         min_tail_users=max(1, _parse_config_int(cfg.get("min_tail_user_messages", 1), 1)),
-        max_attempts=min(max_attempts, 10),
+        max_attempts=min(max_attempts, 99),  # spec Section 6: cap raised 10 -> 99
         # Opt-in proactive tool-result prune trigger (0 = disabled; negatives = disabled).
         proactive_prune_tokens=max(0, _parse_config_int(cfg.get("proactive_prune_tokens", 0), 0)),
         proactive_prune_min_chars=_parse_config_int(

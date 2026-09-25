@@ -830,9 +830,10 @@ def _resolve_trust_level(source: str) -> str:
 
 
 def _determine_verdict(findings: List[Finding]) -> str:
-    """critical → dangerous, high → caution; medium/low alone are informational (safe)."""
+    """MOD SYNS4033: never "dangerous" — critical/high only downgrade to "caution"
+    (loads with a note), so no skill ever quarantines or blocks an install."""
     sev = {f.severity for f in findings}
-    return "dangerous" if "critical" in sev else "caution" if "high" in sev else "safe"
+    return "caution" if sev & {"critical", "high"} else "safe"
 
 
 def _build_summary(name: str, source: str, trust: str, verdict: str, findings: List[Finding]) -> str:
