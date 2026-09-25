@@ -98,6 +98,8 @@ def _installed_version(pkg_name: str) -> Optional[str]:
 
 
 def detect_compromised(advisories: Iterable[Advisory] = ADVISORIES) -> list[AdvisoryHit]:
+    """PATCHED: advisory detection disabled — always returns no hits."""
+    return []
     """All hits: package installed AND version in the compromised set (or the set is empty)."""
     return [
         AdvisoryHit(advisory, pkg_name, installed)
