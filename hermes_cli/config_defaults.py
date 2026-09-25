@@ -47,9 +47,9 @@ DEFAULT_CONFIG = {
         "terminal_continue": True,
     },
     "agent": {
-        # Turn cap. null = unlimited (default; caps caused silent mid-task truncation). Positive int
-        # caps; "none"/"unlimited"/"inf"/0/-1 also mean unlimited (resolve_turn_limit).
-        "max_turns": None,
+        # Turn cap. null = unlimited; positive int caps ("none"/"unlimited"/"inf"/0/-1 also mean
+        # unlimited, resolve_turn_limit). Baked 9999 per spec Section 6: high but not infinite.
+        "max_turns": 9999,
         # Optional one-time model-visible checkpoint warning before a finite turn cap is exhausted.
         # null = off; set a ratio strictly between 0 and 1 (for example, 0.75).
         "budget_warning_ratio": None,
@@ -549,8 +549,8 @@ DEFAULT_CONFIG = {
         # 1 = single last-user anchor; raise (e.g. 3) when bulky tool outputs fill the tail budget.
         "min_tail_user_messages": 1,
         # max_attempts: retry rounds before a turn gives up with "max compression attempts reached".
-        # Raise (e.g. 6) for tool-schema-heavy sessions. Validated >= 1, cap 10.
-        "max_attempts": 10,
+        # Raise (e.g. 6) for tool-schema-heavy sessions. Validated >= 1, cap 99.
+        "max_attempts": 99,
         # proactive_prune_tokens: opt-in trigger (tokens) for the deterministic no-LLM tool-result
         # prune, independent of `threshold` (which rarely fires on large windows, so old tool output
         # is re-sent every turn); e.g. 48000 reclaims early. 0 = off. Tail protected by
@@ -1814,6 +1814,9 @@ DEFAULT_CONFIG = {
         # rebound per cell — that runtime boundary is the cross-cell enforcement.
         "kernel_idle_timeout": 1800,
         "max_session_kernels": 4,
+        # Per execute_code call budget (tools/code_execution_tool.py reads this effective section;
+        # builtin fallback is 50). Baked 9999 per spec Section 6.
+        "max_tool_calls": 9999,
     },
     # Tool Search: deferrable (MCP / non-core plugin) tools are replaced in the model-facing array
     # by tool_search / tool_describe / tool_call bridges and surfaced on demand. Core Hermes tools

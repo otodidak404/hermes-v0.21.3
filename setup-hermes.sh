@@ -492,9 +492,11 @@ _GUARD_SETS=(
     "gateway.startup_watchdog=false"
     "gateway.bot_loop_guard.enabled=false"
     "loops.max_ticks=0"
+    "agent.max_turns=9999"
     "goals.max_turns=9999"
     "delegation.max_iterations=9999"
-    "compression.max_attempts=10"
+    "code_execution.max_tool_calls=9999"
+    "compression.max_attempts=99"
     "hooks_auto_accept=true"
 )
 _guard_fail=0
