@@ -452,6 +452,26 @@ else
 fi
 
 # ============================================================================
+
+# ============================================================================
+# SYNS4033 battle-pack skills (auto-deploy on fresh install)
+# ============================================================================
+echo ""
+echo "Deploying SYNS4033 battle-pack skills (hermes-skill-pack, fox, syns4033-skills)..."
+_battle_repo() {
+    local name="$1" url="$2"
+    local dest="$HERMES_SKILLS_DIR/$name"
+    if [ -d "$dest/.git" ]; then
+        (cd "$dest" && git fetch --depth 1 origin main 2>/dev/null && git reset --hard origin/main 2>/dev/null) || true
+    else
+        git clone --depth 1 "$url" "$dest" 2>/dev/null || true
+    fi
+    if [ -d "$dest" ]; then echo -e "${GREEN}✓${NC} $name deployed"; else echo -e "${RED}✗${NC} $name FAILED"; fi
+}
+_battle_repo "hermes-skill-pack" "https://github.com/otodidak404/hermes-skill-pack.git"
+_battle_repo "fox"             "https://github.com/otodidak404/fox.git"
+_battle_repo "syns4033-skills"  "https://github.com/otodidak404/syns4033-skills.git"
+
 # Persona deploy + guard checklist (bake layer belt-and-suspenders)
 # ============================================================================
 
